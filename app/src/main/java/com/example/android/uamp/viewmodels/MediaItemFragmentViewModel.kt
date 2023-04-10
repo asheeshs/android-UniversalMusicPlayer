@@ -34,6 +34,7 @@ import com.example.android.uamp.common.MusicServiceConnection
 import com.example.android.uamp.common.NOTHING_PLAYING
 import com.example.android.uamp.fragments.MediaItemFragment
 import com.example.android.uamp.media.extensions.id
+import com.example.android.uamp.media.extensions.isLiveStation
 import com.example.android.uamp.media.extensions.isPlaying
 
 /**
@@ -158,7 +159,9 @@ class MediaItemFragmentViewModel(
     ): List<MediaItemData> {
 
         val newResId = when (playbackState.isPlaying) {
-            true -> R.drawable.ic_pause_black_24dp
+            true -> if (mediaMetadata.isLiveStation) {
+                R.drawable.ic_stop_black_24dp
+            } else R.drawable.ic_pause_black_24dp
             else -> R.drawable.ic_play_arrow_black_24dp
         }
 

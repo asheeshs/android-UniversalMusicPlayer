@@ -59,7 +59,7 @@ class AutomotiveMusicService : MusicService() {
         super.onCreate()
 
         // Register to handle login/logout commands.
-        mediaSessionConnector.registerCustomCommandReceiver(AutomotiveCommandReceiver())
+//        mediaSessionConnector.registerCustomCommandReceiver(AutomotiveCommandReceiver())
 
         // Require the user to be logged in for demonstration purposes.
         if (!isAuthenticated()) {

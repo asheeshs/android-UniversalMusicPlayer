@@ -43,4 +43,5 @@
     <!-- Browse Tree -->
     <string name="recommended_title">Recommended</string>
     <string name="albums_title">Albums</string>
+    <string name="live_title">Live Stations</string>
 </resources>

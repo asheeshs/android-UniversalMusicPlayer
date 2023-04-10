@@ -68,7 +68,29 @@ internal class JsonSource(private val source: Uri) : AbstractMusicSource() {
 
     override suspend fun load() {
         updateCatalog(source)?.let { updatedCatalog ->
-            catalog = updatedCatalog
+            val liveStation =  JsonMusic().apply {
+                id = "wnyc"
+                title = "WNYC Live station"
+                album = ""
+                artist = ""
+                genre = "News"
+                source = "https://fm939.wnyc.org/wnycfm?nyprBrowserId=508078c324570000"
+                image = "https://media.wnyc.org/i/300/300/c/80/1/wnyc_square_logo.png"
+                trackNumber = 0
+                totalTrackCount = 0
+                duration = 0 //C.TIME_UNSET
+                site = "https://www.wnyc.org/"
+            }
+            catalog = updatedCatalog + listOf(MediaMetadataCompat.Builder()
+                .from(liveStation)
+                .apply {
+                    displayIconUri = liveStation.image // Used by ExoPlayer and Notification
+                    albumArtUri = liveStation.image
+                    // Keep the original artwork URI for being included in Cast metadata object.
+                    putString(ORIGINAL_ARTWORK_URI_KEY, liveStation.image)
+                }
+                .build()
+            )
             state = STATE_INITIALIZED
         } ?: run {
             catalog = emptyList()

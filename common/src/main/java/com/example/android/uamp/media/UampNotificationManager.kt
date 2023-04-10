@@ -23,6 +23,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
@@ -76,7 +77,13 @@ internal class UampNotificationManager(
     }
 
     fun showNotificationForPlayer(player: Player){
-        notificationManager.setPlayer(player)
+        notificationManager.apply {
+            setPlayer(player)
+            setUseStopAction(player.isCurrentMediaItemLive)
+            setUsePlayPauseActions(!player.isCurrentMediaItemLive)
+            setUseNextAction(!player.isCurrentMediaItemLive)
+            setUsePreviousAction(!player.isCurrentMediaItemLive)
+        }
     }
 
     private inner class DescriptionAdapter(private val controller: MediaControllerCompat) :
@@ -99,6 +106,7 @@ internal class UampNotificationManager(
             callback: PlayerNotificationManager.BitmapCallback
         ): Bitmap? {
             val iconUri = controller.metadata.description.iconUri
+            Log.w("MyMediaSessionConnector", "iconUri: $iconUri")
             return if (currentIconUri != iconUri || currentBitmap == null) {
 
                 // Cache the bitmap for the current song so that successive calls to

@@ -26,11 +26,13 @@ import com.example.android.uamp.media.extensions.album
 import com.example.android.uamp.media.extensions.albumArt
 import com.example.android.uamp.media.extensions.albumArtUri
 import com.example.android.uamp.media.extensions.artist
+import com.example.android.uamp.media.extensions.duration
 import com.example.android.uamp.media.extensions.flag
 import com.example.android.uamp.media.extensions.id
 import com.example.android.uamp.media.extensions.title
 import com.example.android.uamp.media.extensions.trackNumber
 import com.example.android.uamp.media.extensions.urlEncoded
+import com.google.android.exoplayer2.C
 
 /**
  * Represents a tree of media that's used by [MusicService.onLoadChildren].
@@ -94,26 +96,39 @@ class BrowseTree(
             flag = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         }.build()
 
+        val liveMetadata = MediaMetadataCompat.Builder().apply {
+            id = UAMP_LIVE_ROOT
+            title = context.getString(R.string.live_title)
+            albumArtUri = RESOURCE_ROOT_URI +
+                    context.resources.getResourceEntryName(R.drawable.ic_album)
+            flag = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+        }.build()
+
         rootList += recommendedMetadata
         rootList += albumsMetadata
+        rootList += liveMetadata
         mediaIdToChildren[UAMP_BROWSABLE_ROOT] = rootList
 
         musicSource.forEach { mediaItem ->
-            val albumMediaId = mediaItem.album.urlEncoded
-            val albumChildren = mediaIdToChildren[albumMediaId] ?: buildAlbumRoot(mediaItem)
-            albumChildren += mediaItem
+            if (mediaItem.duration == 0L || mediaItem.duration == C.TIME_UNSET) {
+                mediaIdToChildren[UAMP_LIVE_ROOT] = mutableListOf(mediaItem)
+            } else {
+                val albumMediaId = mediaItem.album.urlEncoded
+                val albumChildren = mediaIdToChildren[albumMediaId] ?: buildAlbumRoot(mediaItem)
+                albumChildren += mediaItem
 
-            // Add the first track of each album to the 'Recommended' category
-            if (mediaItem.trackNumber == 1L) {
-                val recommendedChildren = mediaIdToChildren[UAMP_RECOMMENDED_ROOT]
-                    ?: mutableListOf()
-                recommendedChildren += mediaItem
-                mediaIdToChildren[UAMP_RECOMMENDED_ROOT] = recommendedChildren
-            }
+                // Add the first track of each album to the 'Recommended' category
+                if (mediaItem.trackNumber == 1L) {
+                    val recommendedChildren = mediaIdToChildren[UAMP_RECOMMENDED_ROOT]
+                        ?: mutableListOf()
+                    recommendedChildren += mediaItem
+                    mediaIdToChildren[UAMP_RECOMMENDED_ROOT] = recommendedChildren
+                }
 
-            // If this was recently played, add it to the recent root.
-            if (mediaItem.id == recentMediaId) {
-                mediaIdToChildren[UAMP_RECENT_ROOT] = mutableListOf(mediaItem)
+                // If this was recently played, add it to the recent root.
+                if (mediaItem.id == recentMediaId) {
+                    mediaIdToChildren[UAMP_RECENT_ROOT] = mutableListOf(mediaItem)
+                }
             }
         }
     }
@@ -156,6 +171,7 @@ const val UAMP_BROWSABLE_ROOT = "/"
 const val UAMP_EMPTY_ROOT = "@empty@"
 const val UAMP_RECOMMENDED_ROOT = "__RECOMMENDED__"
 const val UAMP_ALBUMS_ROOT = "__ALBUMS__"
+const val UAMP_LIVE_ROOT = "__LIVE__"
 const val UAMP_RECENT_ROOT = "__RECENT__"
 
 const val MEDIA_SEARCH_SUPPORTED = "android.media.browse.SEARCH_SUPPORTED"

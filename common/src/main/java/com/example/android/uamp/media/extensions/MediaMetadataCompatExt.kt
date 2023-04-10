@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaMetadataCompat
 import com.example.android.uamp.media.library.JsonSource
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.MediaMetadata
 import com.google.android.exoplayer2.util.MimeTypes
 
@@ -114,6 +115,9 @@ inline val MediaMetadataCompat.mediaUri: Uri
 
 inline val MediaMetadataCompat.downloadStatus
     get() = getLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS)
+
+inline val MediaMetadataCompat.isLiveStation
+    get() = duration == 0L || duration == C.TIME_UNSET || duration == -1L
 
 /**
  * Custom property for storing whether a [MediaMetadataCompat] item represents an

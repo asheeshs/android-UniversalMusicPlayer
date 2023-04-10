@@ -22,6 +22,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.ResultReceiver
 import android.support.v4.media.MediaBrowserCompat
@@ -104,7 +105,8 @@ open class MusicService : MediaBrowserServiceCompat() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
 
     protected lateinit var mediaSession: MediaSessionCompat
-    protected lateinit var mediaSessionConnector: MediaSessionConnector
+//    protected lateinit var mediaSessionConnector: MediaSessionConnector
+    protected lateinit var mediaSessionConnector: MyMediaSessionConnector
     private var currentPlaylistItems: List<MediaMetadataCompat> = emptyList()
     private var currentMediaItemIndex: Int = 0
 
@@ -171,7 +173,9 @@ open class MusicService : MediaBrowserServiceCompat() {
         // Build a PendingIntent that can be used to launch the UI.
         val sessionActivityPendingIntent =
             packageManager?.getLaunchIntentForPackage(packageName)?.let { sessionIntent ->
-                PendingIntent.getActivity(this, 0, sessionIntent, 0)
+                val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    PendingIntent.FLAG_IMMUTABLE else 0
+                PendingIntent.getActivity(this, 0, sessionIntent, flags)
             }
 
         // Create a new MediaSession.
@@ -211,9 +215,14 @@ open class MusicService : MediaBrowserServiceCompat() {
         }
 
         // ExoPlayer will manage the MediaSession for us.
-        mediaSessionConnector = MediaSessionConnector(mediaSession)
-        mediaSessionConnector.setPlaybackPreparer(UampPlaybackPreparer())
-        mediaSessionConnector.setQueueNavigator(UampQueueNavigator(mediaSession))
+//        mediaSessionConnector = MediaSessionConnector(mediaSession)
+//        mediaSessionConnector.setPlaybackPreparer(UampPlaybackPreparer())
+//        mediaSessionConnector.setQueueNavigator(UampQueueNavigator(mediaSession))
+
+        mediaSessionConnector = MyMediaSessionConnector(mediaSession,
+            UampPlaybackPreparer(),
+            UampQueueNavigator(mediaSession)
+        )
 
         switchToPlayer(
             previousPlayer = null,
@@ -416,7 +425,9 @@ open class MusicService : MediaBrowserServiceCompat() {
                 )
             }
         }
-        mediaSessionConnector.setPlayer(newPlayer)
+
+//        mediaSessionConnector.setPlayer(newPlayer)
+        mediaSessionConnector.player = newPlayer
         previousPlayer?.stop(/* reset= */true)
     }
 
@@ -456,7 +467,7 @@ open class MusicService : MediaBrowserServiceCompat() {
         }
     }
 
-    private inner class UampQueueNavigator(
+    inner class UampQueueNavigator(
         mediaSession: MediaSessionCompat
     ) : TimelineQueueNavigator(mediaSession) {
         override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
@@ -467,7 +478,7 @@ open class MusicService : MediaBrowserServiceCompat() {
         }
     }
 
-    private inner class UampPlaybackPreparer : MediaSessionConnector.PlaybackPreparer {
+    inner class UampPlaybackPreparer : MediaSessionConnector.PlaybackPreparer {
 
         /**
          * UAMP supports preparing (and playing) from search, as well as media ID, so those

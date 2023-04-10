@@ -29,10 +29,13 @@ import com.example.android.uamp.MainActivity
 import com.example.android.uamp.MediaItemData
 import com.example.android.uamp.common.MusicServiceConnection
 import com.example.android.uamp.fragments.NowPlayingFragment
+import com.example.android.uamp.media.extensions.duration
 import com.example.android.uamp.media.extensions.id
+import com.example.android.uamp.media.extensions.isLiveStation
 import com.example.android.uamp.media.extensions.isPlayEnabled
 import com.example.android.uamp.media.extensions.isPlaying
 import com.example.android.uamp.media.extensions.isPrepared
+import com.example.android.uamp.media.extensions.stateName
 import com.example.android.uamp.utils.Event
 
 /**
@@ -115,13 +118,18 @@ class MainActivityViewModel(
     fun playMedia(mediaItem: MediaItemData, pauseAllowed: Boolean = true) {
         val nowPlaying = musicServiceConnection.nowPlaying.value
         val transportControls = musicServiceConnection.transportControls
-
+        Log.w(TAG, "playMedia pauseAllowed : $pauseAllowed, currentState: ${musicServiceConnection.playbackState.value?.stateName}")
         val isPrepared = musicServiceConnection.playbackState.value?.isPrepared ?: false
         if (isPrepared && mediaItem.mediaId == nowPlaying?.id) {
             musicServiceConnection.playbackState.value?.let { playbackState ->
                 when {
                     playbackState.isPlaying ->
-                        if (pauseAllowed) transportControls.pause() else Unit
+                        if (pauseAllowed) {
+                            val isLiveStation = musicServiceConnection.nowPlaying.value?.isLiveStation ?: false
+                            if (isLiveStation)
+                                transportControls.stop()
+                            else transportControls.pause()
+                        } else Unit
                     playbackState.isPlayEnabled -> transportControls.play()
                     else -> {
                         Log.w(
@@ -139,12 +147,18 @@ class MainActivityViewModel(
     fun playMediaId(mediaId: String) {
         val nowPlaying = musicServiceConnection.nowPlaying.value
         val transportControls = musicServiceConnection.transportControls
+        Log.w(TAG, "playMediaId mediaId : $mediaId, " +
+                "currentState: ${musicServiceConnection.playbackState.value?.stateName}, " +
+                "isLive: ${musicServiceConnection.nowPlaying.value?.duration}")
 
         val isPrepared = musicServiceConnection.playbackState.value?.isPrepared ?: false
         if (isPrepared && mediaId == nowPlaying?.id) {
             musicServiceConnection.playbackState.value?.let { playbackState ->
                 when {
-                    playbackState.isPlaying -> transportControls.pause()
+                    playbackState.isPlaying -> {
+                        val isLiveStation = musicServiceConnection.nowPlaying.value?.isLiveStation ?: false
+                        if (isLiveStation) transportControls.stop() else transportControls.pause()
+                    }
                     playbackState.isPlayEnabled -> transportControls.play()
                     else -> {
                         Log.w(

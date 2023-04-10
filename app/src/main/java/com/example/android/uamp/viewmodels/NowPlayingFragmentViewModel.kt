@@ -24,6 +24,7 @@ import android.os.Looper
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -39,6 +40,7 @@ import com.example.android.uamp.media.extensions.currentPlayBackPosition
 import com.example.android.uamp.media.extensions.displaySubtitle
 import com.example.android.uamp.media.extensions.duration
 import com.example.android.uamp.media.extensions.id
+import com.example.android.uamp.media.extensions.isLiveStation
 import com.example.android.uamp.media.extensions.isPlaying
 import com.example.android.uamp.media.extensions.title
 
@@ -180,9 +182,19 @@ class NowPlayingFragmentViewModel(
         }
 
         // Update the media button resource ID
+        val isPauseAvailable = playbackState.actions and PlaybackStateCompat.ACTION_PAUSE
+        val isStopAvailable = playbackState.actions and PlaybackStateCompat.ACTION_STOP
+        val isPlayAvailable = playbackState.actions and PlaybackStateCompat.ACTION_PLAY
+        val isPlayPauseAvailable = playbackState.actions and PlaybackStateCompat.ACTION_PLAY_PAUSE
+        Log.d(TAG, "playbackState, isPauseAvailable: $isPauseAvailable, " +
+                "isStopAvailable: $isStopAvailable, " +
+                "isPlayAvailable: $isPlayAvailable, " +
+                "isPlayPauseAvailable: $isPlayPauseAvailable")
         mediaButtonRes.postValue(
             when (playbackState.isPlaying) {
-                true -> R.drawable.ic_pause_black_24dp
+                true -> if (mediaMetadata.isLiveStation) {
+                    R.drawable.ic_stop_black_24dp
+                } else R.drawable.ic_pause_black_24dp
                 else -> R.drawable.ic_play_arrow_black_24dp
             }
         )
